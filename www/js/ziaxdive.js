@@ -111,7 +111,7 @@
       };
     };
   }])
-  .directive('jogDepth', ['RdpTable', 'LocalStorage', function(RdpTable, LocalStorage) {
+  .directive('jogDepth', ['LocalStorage', function(LocalStorage) {
     // Runs during compile
     return {
       scope: {
@@ -141,7 +141,7 @@
       }
     };
   }])
-  .directive('jogTime', ['RdpTable', 'LocalStorage', function(RdpTable, LocalStorage) {
+  .directive('jogTime', ['LocalStorage', function(LocalStorage) {
     // Runs during compile
     return {
       scope: {
@@ -175,6 +175,36 @@
       }
     };
   }])
+  .directive('jogSurface', ['LocalStorage', function(LocalStorage) {
+    // Runs during compile
+    return {
+      scope: {
+        surfaceIndex: '=jogSurface',
+        jogMax: '=jogMax'
+      },
+      link: function($scope, iElm) {
+        var lastpos,
+            angle = LocalStorage('jogSurface').get('angle') || 0;
+        var dial = JogDial(iElm[0], { wheelSize: '200px', knobSize: '70px', minDegree: 0, maxDegree: 360, degreeStartAt: angle });
+
+        dial.on("mousemove", function(event) {
+          var newAngle = event.target.rotation;
+          LocalStorage('jogSurface').set('angle', newAngle);
+          whenChanged(newAngle, $scope.jogMax, function(val) {
+            $scope.$apply(function() { $scope.surfaceIndex = val; });
+          });
+        });
+
+        var whenChanged = function(angle, max, changedCb) {
+          var pos = Math.floor((angle / 360 ) * max);
+          if (pos === lastpos) return;
+          lastpos = pos;
+          changedCb(pos);
+        };
+        whenChanged(angle, $scope.jogMax, function(val) { $scope.surfaceIndex = val; });
+      }
+    };
+  }])
   .directive('addMetrics', ['Settings', function(Settings) {
     return function($scope, iElm) {
         iElm.addClass('metric').removeClass('ft');
@@ -204,9 +234,12 @@
       new LocalStorage('settings').set('data', $scope.form);
     };
   }])
-  .controller('rdp', ['$scope', 'rdpdata', 'RdpTable', function($scope, rdpdata, RdpTable) {
+  .controller('rdp', ['$scope', 'rdpdata', 'RdpTable', 'RdpSurface', function($scope, rdpdata, RdpTable, RdpSurface) {
     $scope.data = rdpdata;
     $scope.RdpTable = RdpTable;
+    $scope.RdpSurface = {
+      times: []
+    };
     $scope.group = {
       mins: []
     };
@@ -225,6 +258,19 @@
       $scope.data.group = String.fromCharCode(97 + v);
       $scope.data.decolimit = v === $scope.group.mins.length - 1;
       $scope.data.safestop = $scope.group.safe_stops.indexOf($scope.data.time) !== -1;
+
+      $scope.RdpSurface = RdpSurface[v];
+    });
+
+    $scope.$watch('data.surfaceIndex', function(v) {
+      if (!angular.isDefined(v)) return;
+      // console.log('data.surfaceIndex', v);
+      $scope.data.surface = $scope.RdpSurface.times[v];
+
+      // console.log('len', $scope.RdpSurface.times.length - v);
+      $scope.data.newGroup = String.fromCharCode(97 + ($scope.RdpSurface.times.length -1 - v));
+      $scope.data.surfaceMax = $scope.data.surface;
+      $scope.data.surfaceMin = (--v === -1) ? 0 : $scope.RdpSurface.times[v];
     });
 
   }]);
