@@ -248,8 +248,7 @@
   .controller('rdp', ['$scope', 'rdpdata', 'RdpTable', 'RdpSurface', 'RdpRepeat', function($scope, rdpdata, RdpTable, RdpSurface, RdpRepeat) {
     $scope.log = [];
     $scope.previousDives = [];
-    // $scope.previousDives = [{ depth: 14, bottomTime: 50, surfaceTime: 108, newGroupIndex: 3 }];
-    $scope.previousDives.push({ depth: 14, bottomTime: 50, surfaceTime: 108, newGroupIndex: 3, newGroup: 'd' });
+    // $scope.previousDives.push({ depth: 14, bottomTime: 50, surfaceTime: 108, newGroupIndex: 3, newGroup: 'd' });
 
     // $scope.previousDive = RdpRepeat[3];
     $scope.previousDive = { group: null };
